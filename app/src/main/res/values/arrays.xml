@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="all_clubs_suggestions">
+        <item>Academic</item>
+        <item>Co-Ops/Enterprise</item>
+        <item>Cultural</item>
+        <item>Dance</item>
+        <item>Educational</item>
+        <item>Health Professions</item>
+        <item>Interfraternity Council (IFC)</item>
+        <item>Martial Arts</item>
+        <item>Media</item>
+        <item>Greek Council - Fraternity</item>
+        <item>Greek Council - Sorority</item>
+        <item>Panhellenic</item>
+        <item>Political</item>
+        <item>Pre-Professional</item>
+        <item>Service</item>
+        <item>Social</item>
+        <item>Spiritual</item>
+        <item>Student Affirmative Action Committee (SAAC)</item>
+    </string-array>
+
+    <integer-array name="bubblepicker_images">
+        <item>@drawable/academic</item>
+        <item>@drawable/enterprise</item>
+        <item>@drawable/culture</item>
+        <item>@drawable/dance</item>
+        <item>@drawable/educational</item>
+        <item>@drawable/health</item>
+        <item>@drawable/greek</item>
+        <item>@drawable/martial_arts</item>
+        <item>@drawable/media</item>
+        <item>@drawable/greek</item>
+        <item>@drawable/greek</item>
+        <item>@drawable/greek</item>
+        <item>@drawable/political</item>
+        <item>@drawable/pre_professional</item>
+        <item>@drawable/service</item>
+        <item>@drawable/social</item>
+        <item>@drawable/spiritual</item>
+        <item>@drawable/saac</item>
+    </integer-array>
+    
+    // Bubble Picker
+    <integer-array name="colors">
+        <item>@color/roseStart</item>
+        <item>@color/roseEnd</item>
+        <item>@color/blueStart</item>
+        <item>@color/blueEnd</item>
+        <item>@color/greenStart</item>
+        <item>@color/greenEnd</item>
+        <item>@color/purpleStart</item>
+        <item>@color/purpleEnd</item>
+    </integer-array>
+
+
+
+</resources>
