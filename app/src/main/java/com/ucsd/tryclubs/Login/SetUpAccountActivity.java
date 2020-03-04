@@ -1,14 +1,22 @@
 package com.ucsd.tryclubs.Login;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.blogspot.atifsoftwares.animatoolib.Animatoo;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -24,9 +32,7 @@ import com.ucsd.tryclubs.Model.User;
 import com.ucsd.tryclubs.R;
 
 /**
- * Class SetUpAccountActivity sets the content to res/layout/activity_set_up_account.xml
- * and this is page where user assigns their username after sign up as a new user.
- *
+ * Class SetUpAccountActivity is the "set up account" page in the App.
  */
 public class SetUpAccountActivity extends AppCompatActivity {
 
@@ -79,19 +85,41 @@ public class SetUpAccountActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-
-
-
                                 createUserClassAndAddtoFirebase(usernameField,userEmail, uid);
+                                goToDiscoverActivityHelper();
                             } else {
-                                Toast.makeText(getApplicationContext(), task.getException().getMessage(),Toast.LENGTH_LONG).show();
+                                //Toast.makeText(getApplicationContext(), task.getException().getMessage(),Toast.LENGTH_LONG).show();
+                                Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  task.getException().getMessage(), Snackbar.LENGTH_LONG);
+                                View view = sn.getView();
+                                TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                                tv.setTextColor(Color.parseColor("#FFD700"));
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                                    tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                                } else {
+                                    tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                                }
+                                sn.show();
                             }
                         }
                     });
-                    goToDiscoverActivityHelper();
                 } else {
                     goToLoginActivityHelper();
                 }
+            }
+        });
+
+        mEnterUserNameEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if ((actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_DOWN)|| (actionId == EditorInfo.IME_ACTION_DONE)){
+                    View view = getCurrentFocus();
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+                    mNextButton.performClick();
+                }
+                return true;
             }
         });
     }
@@ -114,7 +142,6 @@ public class SetUpAccountActivity extends AppCompatActivity {
 
         FirebaseUser user = mAuth.getCurrentUser();
 
-        // TODO
         if (user != null) {
             // when the user is signed in
         } else {

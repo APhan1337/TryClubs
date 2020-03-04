@@ -1,11 +1,19 @@
 package com.ucsd.tryclubs.Login;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -21,9 +29,7 @@ import com.ucsd.tryclubs.MainActivity;
 import com.ucsd.tryclubs.R;
 
 /**
- * Class ForgottenPasswordActivity sets the content to res/layout/activity_forgotten_password.xml
- * and this is the forgot password page.
- *
+ * class ForgottenPasswordActivity is the "forgot password" page in the App.
  */
 public class ForgottenPasswordActivity extends AppCompatActivity {
 
@@ -60,6 +66,7 @@ public class ForgottenPasswordActivity extends AppCompatActivity {
                 mProgressBar.setVisibility(View.VISIBLE);
                 mAlreadyHaveaccountTextView.setVisibility(View.INVISIBLE);
                 mLoginTextView.setVisibility(View.INVISIBLE);
+                mResetPassswordBtn.setVisibility(View.INVISIBLE);
 
                 // get user's email
                 String user_input_email = mEmailInputEditText.getText().toString();
@@ -71,14 +78,44 @@ public class ForgottenPasswordActivity extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 goToLoginInActivityHelper();
                                 Toast.makeText(ForgottenPasswordActivity.this, "Reset Password Email Sent", Toast.LENGTH_LONG).show();
+                                //Snackbar.make(findViewById(android.R.id.content),  "Reset Password Email Sent", Snackbar.LENGTH_LONG).show();
                             } else {
-                                Toast.makeText(ForgottenPasswordActivity.this, "Couldn't send reset password email.", Toast.LENGTH_LONG).show();
+                                //Toast.makeText(ForgottenPasswordActivity.this, "Couldn't send reset password email", Toast.LENGTH_LONG).show();
+                                //Snackbar.make(findViewById(android.R.id.content),  "Couldn't send reset password email", Snackbar.LENGTH_LONG).show();
+
+                                String ErrorMsg = task.getException().getMessage();
+                                Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Error: " + ErrorMsg, Snackbar.LENGTH_LONG);
+                                View view = sn.getView();
+                                TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                                tv.setTextColor(Color.parseColor("#FFD700"));
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                                    tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                                } else {
+                                    tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                                }
+                                sn.show();
                             }
                             mProgressBar.setVisibility(View.INVISIBLE);
                             mAlreadyHaveaccountTextView.setVisibility(View.VISIBLE);
                             mLoginTextView.setVisibility(View.VISIBLE);
+                            mResetPassswordBtn.setVisibility(View.VISIBLE);
                         }
                     });
+                } else {
+                    Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Please Enter an Email", Snackbar.LENGTH_LONG);
+                    View view = sn.getView();
+                    TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                    tv.setTextColor(Color.parseColor("#FFD700"));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    } else {
+                        tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                    }
+                    sn.show();
+                    mProgressBar.setVisibility(View.INVISIBLE);
+                    mAlreadyHaveaccountTextView.setVisibility(View.VISIBLE);
+                    mLoginTextView.setVisibility(View.VISIBLE);
+                    mResetPassswordBtn.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -88,6 +125,21 @@ public class ForgottenPasswordActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 goToLoginInActivityHelper();
+            }
+        });
+
+        mEmailInputEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if ((actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_DOWN)|| (actionId == EditorInfo.IME_ACTION_DONE)){
+                    View view = getCurrentFocus();
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+                    mResetPassswordBtn.performClick();
+                }
+                return true;
             }
         });
     }
@@ -119,10 +171,12 @@ public class ForgottenPasswordActivity extends AppCompatActivity {
     }
 
     /**
-     * Helper method which use Intent to go back to the Login Page (Timeline)
+     * Helper method which use Intent to go back to the Login Page
      */
     private void goToLoginInActivityHelper() {
-        startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+        Intent goToLoginInActivity = new Intent(getApplicationContext(), LoginActivity.class);
+        goToLoginInActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(goToLoginInActivity);
         finish();
     }
 

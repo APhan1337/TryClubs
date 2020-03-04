@@ -1,6 +1,5 @@
 package com.ucsd.tryclubs.Fragment;
 
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -23,14 +22,14 @@ import com.ucsd.tryclubs.Activity.ClubProfileActivity;
 import com.ucsd.tryclubs.Model.FollowingClubs;
 import com.ucsd.tryclubs.R;
 import com.ucsd.tryclubs.ViewHolder.FollowingClubsViewHolder;
-import com.ucsd.tryclubs.getRandomPicture;
+import com.ucsd.tryclubs.getRandom;
 
 /**
- * A simple {@link Fragment} subclass.
+ * class FavoringClubsFragment is the "Favoring Clubs" page in the App.
  */
-public class ClublistFragment extends Fragment{
+public class FavoringClubsFragment extends Fragment{
 
-    private static final String TAG = "ClublistFragment";
+    private static final String TAG = "FavoringClubsFragment";
 
     private FirebaseAuth mAuth;
     private FirebaseDatabase mFirebaseDatabase;
@@ -43,7 +42,7 @@ public class ClublistFragment extends Fragment{
     FirebaseRecyclerOptions<FollowingClubs> options;
     FirebaseRecyclerAdapter<FollowingClubs, FollowingClubsViewHolder> adapter;
 
-    public ClublistFragment() {
+    public FavoringClubsFragment() {
 
     }
 
@@ -65,6 +64,9 @@ public class ClublistFragment extends Fragment{
         return v;
     }
 
+    /**
+     * method setupRecyclerView set up the favoring clubs lists
+     */
     public void setupRecyclerView(RecyclerView recyclerView) {
         Log.d(TAG, "setupRecyclerView!!!" );
 
@@ -83,6 +85,7 @@ public class ClublistFragment extends Fragment{
                     @Override
                     public void onClick(View v) {
                         Intent clubProfilePage = new Intent(getContext(), ClubProfileActivity.class);
+                        clubProfilePage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                         Log.d(TAG, "holder.itemView.setOnClickListener Intent Extra: " + club_name);
                         clubProfilePage.putExtra(ClubProfileActivity.EXTRA, club_name);
                         startActivity(clubProfilePage);
@@ -91,7 +94,7 @@ public class ClublistFragment extends Fragment{
 
                 RequestOptions requestoptions = new RequestOptions();
                 Glide.with(holder.mImageView.getContext())
-                        .load(getRandomPicture.getRandomCheeseDrawable())
+                        .load(getRandom.getRandomUCSDDrawable())
                         .apply(requestoptions.fitCenter())
                         .into(holder.mImageView);
             }
@@ -103,9 +106,7 @@ public class ClublistFragment extends Fragment{
                         .inflate(R.layout.clublist_layout, viewGroup, false);
                 return new FollowingClubsViewHolder(view);
             }
-
         };
-
         recyclerView.setAdapter(adapter);
         adapter.startListening();
     }

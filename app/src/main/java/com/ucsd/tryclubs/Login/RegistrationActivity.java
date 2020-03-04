@@ -1,19 +1,26 @@
 package com.ucsd.tryclubs.Login;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.blogspot.atifsoftwares.animatoolib.Animatoo;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -25,9 +32,7 @@ import com.ucsd.tryclubs.MainActivity;
 import com.ucsd.tryclubs.R;
 
 /**
- * Class RegistrationActivity sets the content to res/layout/activity_registration.xml
- * and this is the Sign up new user page.
- *
+ * Class RegistrationActivity is the "Registration" page in the App.
  */
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -82,8 +87,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 String user_input_password = mPasswordEditText.getText().toString();
                 String user_input_confirm_password = mConfirmPassEditText.getText().toString();
 
-                // TODO - TESTING
-                if (!TextUtils.isEmpty(user_input_email) && !TextUtils.isEmpty(user_input_password) && !TextUtils.isEmpty(user_input_confirm_password)) {
+                if (!TextUtils.isEmpty(user_input_email) && !TextUtils.isEmpty(user_input_password) && !TextUtils.isEmpty(user_input_confirm_password) && user_input_email.toLowerCase().endsWith("@ucsd.edu")) {
                     if (user_input_password.equals(user_input_confirm_password)) {
                         mAuth.createUserWithEmailAndPassword(user_input_email, user_input_password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override
@@ -93,7 +97,17 @@ public class RegistrationActivity extends AppCompatActivity {
                                     goToSetUpAccountActivityHelper();
                                 } else {
                                     String errormsg = task.getException().getMessage();
-                                    Toast.makeText(RegistrationActivity.this, "Error: " + errormsg, Toast.LENGTH_LONG).show();
+                                    //Toast.makeText(RegistrationActivity.this, "Error: " + errormsg, Toast.LENGTH_LONG).show();
+                                    Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Error: " + errormsg, Snackbar.LENGTH_LONG);
+                                    View view = sn.getView();
+                                    TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                                    tv.setTextColor(Color.parseColor("#FFD700"));
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                                        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                                    } else {
+                                        tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                                    }
+                                    sn.show();
                                     // set some button visibility
                                     mProgressBar.setVisibility(View.INVISIBLE);
                                     mSignUPBtn.setVisibility(View.VISIBLE);
@@ -104,7 +118,32 @@ public class RegistrationActivity extends AppCompatActivity {
                         });
 
                     } else {
-                        Toast.makeText(RegistrationActivity.this, "Password and Confirm Password don't match", Toast.LENGTH_LONG).show();
+
+                        if (!TextUtils.isEmpty(user_input_email) && !user_input_email.toLowerCase().endsWith("@ucsd.edu")) {
+                            //Toast.makeText(RegistrationActivity.this, "Please make sure you use @ucsd.edu email", Toast.LENGTH_LONG).show();
+                            Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Please make sure you use @ucsd.edu email", Snackbar.LENGTH_LONG);
+                            View view = sn.getView();
+                            TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                            tv.setTextColor(Color.parseColor("#FFD700"));
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                                tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                            } else {
+                                tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                            }
+                            sn.show();
+                        } else {
+                            //Toast.makeText(RegistrationActivity.this, "Password and Confirm Password don't match", Toast.LENGTH_LONG).show();
+                            Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Password and Confirm Password don't match", Snackbar.LENGTH_LONG);
+                            View view = sn.getView();
+                            TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                            tv.setTextColor(Color.parseColor("#FFD700"));
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                                tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                            } else {
+                                tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                            }
+                            sn.show();
+                        }
                         // set some button visibility
                         mProgressBar.setVisibility(View.INVISIBLE);
                         mSignUPBtn.setVisibility(View.VISIBLE);
@@ -112,7 +151,32 @@ public class RegistrationActivity extends AppCompatActivity {
                         mLoginTextView.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    Toast.makeText(RegistrationActivity.this, "Please fill all fields", Toast.LENGTH_LONG).show();
+
+                    if (!TextUtils.isEmpty(user_input_email)&& !user_input_email.endsWith("@ucsd.edu")) {
+                        //Toast.makeText(RegistrationActivity.this, "Please make sure you use @ucsd.edu email", Toast.LENGTH_LONG).show();
+                        Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Please make sure you use @ucsd.edu email", Snackbar.LENGTH_LONG);
+                        View view = sn.getView();
+                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                        tv.setTextColor(Color.parseColor("#FFD700"));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                            tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        } else {
+                            tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                        }
+                        sn.show();
+                    } else {
+                        //Toast.makeText(RegistrationActivity.this, "Please fill all fields", Toast.LENGTH_LONG).show();
+                        Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Please fill all fields", Snackbar.LENGTH_LONG);
+                        View view = sn.getView();
+                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                        tv.setTextColor(Color.parseColor("#FFD700"));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                            tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        } else {
+                            tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                        }
+                        sn.show();
+                    }
                     // set some button visibility
                     mProgressBar.setVisibility(View.INVISIBLE);
                     mSignUPBtn.setVisibility(View.VISIBLE);
@@ -154,6 +218,21 @@ public class RegistrationActivity extends AppCompatActivity {
             }
         });
 
+        mConfirmPassEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if ((actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_DOWN)|| (actionId == EditorInfo.IME_ACTION_DONE)){
+                    View view = getCurrentFocus();
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+                    mSignUPBtn.performClick();
+                }
+                return true;
+            }
+        });
+
     }
 
     /**
@@ -172,7 +251,6 @@ public class RegistrationActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        // TODO - FEEL LIKE NO NEED TO CHECK
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
 
@@ -195,7 +273,9 @@ public class RegistrationActivity extends AppCompatActivity {
      * Helper method which use Intent to go to the Login Page
      */
     private void goToLoginInActivityHelper() {
-        startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+        Intent goToLoginInActivity = new Intent(getApplicationContext(), LoginActivity.class);
+        goToLoginInActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(goToLoginInActivity);
         finish();
     }
 

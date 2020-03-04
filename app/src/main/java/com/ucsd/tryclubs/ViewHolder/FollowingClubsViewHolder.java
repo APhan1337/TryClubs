@@ -9,7 +9,7 @@ import com.ucsd.tryclubs.R;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class FollowingClubsViewHolder extends RecyclerView.ViewHolder{
+public class FollowingClubsViewHolder extends RecyclerView.ViewHolder {
 
     public View mView;
     public CircleImageView mImageView;
@@ -22,9 +22,5 @@ public class FollowingClubsViewHolder extends RecyclerView.ViewHolder{
         mImageView = itemView.findViewById(R.id.clublist_circleImageView);
         mTextView = itemView.findViewById(R.id.clublist_clubdescription);
         linearLayout = (LinearLayout) itemView.findViewById(R.id.clublist_linearlayout);
-
     }
-
-
-
 }

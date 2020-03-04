@@ -9,26 +9,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.blogspot.atifsoftwares.animatoolib.Animatoo;
 import com.google.firebase.auth.FirebaseAuth;
 import com.igalata.bubblepicker.BubblePickerListener;
 import com.igalata.bubblepicker.adapter.BubblePickerAdapter;
 import com.igalata.bubblepicker.model.BubbleGradient;
 import com.igalata.bubblepicker.model.PickerItem;
 import com.igalata.bubblepicker.rendering.BubblePicker;
-import com.ucsd.tryclubs.MainActivity;
+import com.ucsd.tryclubs.Activity.ClubSuggestionsActivity;
 import com.ucsd.tryclubs.R;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
- * Class DiscoverActivity sets the content to res/layout/activity_discover.xml
- * and this is the Bubble Picker "Discover" page.
- *
+ * class DiscoverActivity is the "Discover/Bubble Picker" page in the App.
  */
 public class DiscoverActivity extends AppCompatActivity {
+
+    private static final String TAG = "DiscoverActivity";
 
     // BubblePicker library
     private BubblePicker picker;
@@ -45,6 +45,9 @@ public class DiscoverActivity extends AppCompatActivity {
     // Firebase stuff
     private FirebaseAuth mAuth;
 
+    int count = 0;
+    String seletedCategory = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,25 +58,17 @@ public class DiscoverActivity extends AppCompatActivity {
         final TypedArray images = getResources().obtainTypedArray(R.array.bubblepicker_images);
 
         picker = findViewById(R.id.picker);
-        picker.setMaxSelectedCount(3);
+        picker.setMaxSelectedCount(5);
 
         mDiscover = findViewById(R.id.bubblepicker_discover);
         mSubtitle = findViewById(R.id.bubblepicker_subtitle);
         mTapToChoose = findViewById(R.id.bubblepicker_tapTochoose);
         mNextButton = findViewById(R.id.bubblepicker_next_button);
 
-        type =  Typeface.createFromAsset(getApplicationContext().getAssets(), "font/googlesans_regular.ttf");
+        type = Typeface.createFromAsset(getApplicationContext().getAssets(), "font/googlesans_regular.ttf");
         mDiscover.setTypeface(type);
         mSubtitle.setTypeface(type);
         mTapToChoose.setTypeface(type);
-
-        mNextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO
-                goToMainActivityHelper();
-            }
-        });
 
         picker.setAdapter(new BubblePickerAdapter() {
             @Override
@@ -98,20 +93,42 @@ public class DiscoverActivity extends AppCompatActivity {
         colors.recycle();
         images.recycle();
         picker.setBubbleSize(20);
+        mNextButton.setText(getApplicationContext().getString(R.string.skip));
 
         picker.setListener(new BubblePickerListener() {
             @Override
             public void onBubbleSelected(@NotNull PickerItem item) {
-                // TODO
-                if (picker.getSelectedItems().size() > 0) {
-                    mNextButton.setText("FINISH");
+                count++;
+                if (count > 0) {
+                    mNextButton.setText(getApplicationContext().getString(R.string.next));
                 }
-                Toast.makeText(getApplicationContext(),"Hi", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onBubbleDeselected(@NotNull PickerItem item) {
-                // TODO
+                count--;
+                if(count == 0) {
+                    mNextButton.setText(getApplicationContext().getString(R.string.skip));
+                }
+            }
+        });
+
+        mNextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<PickerItem> allItems = picker.getSelectedItems();
+                for (PickerItem i : allItems) {
+                    String temp = i.getTitle().toLowerCase() + ",";
+                    seletedCategory = seletedCategory + temp;
+                }
+
+                if (!seletedCategory.isEmpty()) {
+                    seletedCategory = seletedCategory.substring(0, seletedCategory.lastIndexOf(","));
+                }
+                Intent goToSuggestionList = new Intent(getApplicationContext(), ClubSuggestionsActivity.class);
+                goToSuggestionList.putExtra(ClubSuggestionsActivity.EXTRA, seletedCategory);
+                startActivity(goToSuggestionList);
+                finish();
             }
         });
 
@@ -136,15 +153,5 @@ public class DiscoverActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         picker.onPause();
-    }
-
-    /**
-     * Helper method which use Intent to go back to the Main Page (Timeline)
-     */
-    // TODO
-    private void goToMainActivityHelper() {
-        startActivity(new Intent(getApplicationContext(), MainActivity.class));
-        Animatoo.animateSlideUp(this); //fire the slide up animation
-        finish();
     }
 }

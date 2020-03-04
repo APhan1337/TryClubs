@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,27 +20,41 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.miguelcatalan.materialsearchview.MaterialSearchView;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.ucsd.tryclubs.Activity.ClubCreationActivity;
+import com.ucsd.tryclubs.Activity.ClubProfileActivity;
+import com.ucsd.tryclubs.Activity.SearchActivity;
 import com.ucsd.tryclubs.Activity.UserProfileActivity;
-import com.ucsd.tryclubs.Fragment.ClublistFragment;
+import com.ucsd.tryclubs.Fragment.FavoringClubsFragment;
+import com.ucsd.tryclubs.Fragment.FollowingEventsFragment;
 import com.ucsd.tryclubs.Fragment.TimelineFragment;
 import com.ucsd.tryclubs.Login.LoginActivity;
+import com.ucsd.tryclubs.Model.Clubs;
 
 /**
- * Class MainActivity sets the content to res/layout/activity_main.xml
- * and this is the TimeLine and the start screen of the App.
- *
+ * class MainActivity is the starter class in the App.
+ * It sets the default view as the TimeLine Fragment.
  */
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+    private static final String TAG = "MainActivity";
 
     // top bar stuff
-    private MaterialSearchView materialSearchView;
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
     private Toolbar toolbar; // maybe useful in the future, toolbar is the "Blue Bar" in the top
 
     // Firebase Instance
     private FirebaseAuth mAuth;
+    private FirebaseDatabase mFirebaseDatabase;
+    private DatabaseReference mUserRef;
+    private DatabaseReference mUserMyClubRef;
+    private DatabaseReference mClubs;
 
     // Fragment
     private TimelineFragment fTimelineFragment;
@@ -48,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView mNavigationView;
     private MenuItem mTimelineItem;
     private MenuItem mClublistsItem;
+    private MenuItem mMyFollowing;
     private MenuItem mCreateAclub;
     private MenuItem mManageMyClub;
     private MenuItem mLogoutItem;
@@ -66,48 +82,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.drawer_layout);
 
-        // get authentication from Firebase
-        mAuth = FirebaseAuth.getInstance();
-
-        // locate Toolbar
-        toolbar = (Toolbar)findViewById(R.id.main_toolbar);
-        setSupportActionBar(toolbar);
-
         // set the timeline fragment as default
         fTimelineFragment = new TimelineFragment();
         setFragment(fTimelineFragment);
 
-        // SEARCH BAR:
-        // Library (Please Check): https://github.com/MiguelCatalan/MaterialSearchView
-        // TODO - implementation
-        materialSearchView = (MaterialSearchView) findViewById(R.id.search_view);
-
-        // add auto fill in the search bar
-        materialSearchView.setSuggestions(getResources().getStringArray(R.array.all_clubs_suggestions));
-        materialSearchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                //Do some magic
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return true;
-            }
-        });
-
-        materialSearchView.setOnSearchViewListener(new MaterialSearchView.SearchViewListener() {
-            @Override
-            public void onSearchViewShown() {
-                //Do some magic
-            }
-
-            @Override
-            public void onSearchViewClosed() {
-                //Do some magic
-            }
-        });
+        // get authentication from Firebase
+        mAuth = FirebaseAuth.getInstance();
+        // locate Toolbar
+        toolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(toolbar);
 
         // SIDE DRAWER (aka NavigationView):
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
@@ -116,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mDrawerToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mNavigationView = (NavigationView)findViewById(R.id.navigation_view);
+        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
         mNavigationView.setNavigationItemSelectedListener(this);
         // get the header stuff in side the side drawer
         headerView = mNavigationView.getHeaderView(0);
@@ -127,9 +110,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (mAuth.getCurrentUser() == null) {
                     // when user is not signed in
                     goToLoginActivityHelper();
+                    CloseDrawer();
                 } else {
                     // when user is signed in
                     goToUserProfileActivityHelper();
+                    CloseDrawer();
                 }
             }
         });
@@ -137,9 +122,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // locate more components
         mUsername = headerView.findViewById(R.id.usernameTextView);
         mUserEmailAccount = headerView.findViewById(R.id.emailTextView);
-        mCreateAclub = mNavigationView.getMenu().getItem(2);
-        mManageMyClub = mNavigationView.getMenu().getItem(3);
-        mLogoutItem = mNavigationView.getMenu().getItem(4);
+        mTimelineItem = mNavigationView.getMenu().getItem(0);
+        mClublistsItem = mNavigationView.getMenu().getItem(1);
+        mMyFollowing = mNavigationView.getMenu().getItem(2);
+        mCreateAclub = mNavigationView.getMenu().getItem(3);
+        mManageMyClub = mNavigationView.getMenu().getItem(4);
+        mLogoutItem = mNavigationView.getMenu().getItem(5);
+
+        mTimelineItem.setChecked(true);
+        getSupportActionBar().setTitle("Timeline");
     }
 
     /**
@@ -157,6 +148,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // when user is not signed in
             mUsername.setText("Click Gary to Log In");
             mUserEmailAccount.setText("");
+            mClublistsItem.setVisible(false);
+            mMyFollowing.setVisible(false);
             mCreateAclub.setVisible(false);
             mManageMyClub.setVisible(false);
             mLogoutItem.setVisible(false);
@@ -164,10 +157,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // when user is signed in, assign their username and email to the headerView
             String userEmailAddress = user.getEmail();
             mUserEmailAccount.setText(userEmailAddress);
+            mClublistsItem.setVisible(true);
+            mMyFollowing.setVisible(true);
             mCreateAclub.setVisible(true);
             mManageMyClub.setVisible(true);
             mLogoutItem.setVisible(true);
             mUsername.setText(user.getDisplayName());
+
+            mFirebaseDatabase = FirebaseDatabase.getInstance();
+            mUserRef = mFirebaseDatabase.getReference().child(getApplicationContext().getString(R.string.firebase_users_tag)).child(mAuth.getCurrentUser().getUid());
+            mUserRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (checkIfMyClubExist(dataSnapshot)) {
+                        // when my_club exist
+                        mManageMyClub.setVisible(true);
+                        mCreateAclub.setVisible(false);
+                    } else {
+                        mManageMyClub.setVisible(false);
+                        mCreateAclub.setVisible(true);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
         }
     }
 
@@ -179,8 +195,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void onBackPressed() {
         if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else if (materialSearchView.isSearchOpen()) {
-            materialSearchView.closeSearch();
         } else {
             super.onBackPressed();
         }
@@ -196,8 +210,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if (mDrawerToggle.onOptionsItemSelected(item)) {
-
             return true;
+        }
+
+        if (item.getItemId() == R.id.action_search) {
+            Intent SearchPage = new Intent(getApplicationContext(), SearchActivity.class);
+            Log.d(TAG, "Going into Search Page");
+            startActivity(SearchPage);
         }
 
         return super.onOptionsItemSelected(item);
@@ -207,15 +226,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * Override system method onCreateOptionsMenu which Inflates(replaces)
      * the ToolBar to SearchBar's View
      *
-     * @param menu  [the "search" button specifically]
+     * @param menu [the "search" button specifically]
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search, menu);
-
-        MenuItem item = menu.findItem(R.id.action_search);
-        materialSearchView.setMenuItem(item);
-
         return true;
     }
 
@@ -223,26 +238,48 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * Override system method onNavigationItemSelected defines the behavior
      * of which an items in the drawer is clicked
      *
-     * @param menuItem  [an item in the drawer menu]
+     * @param menuItem [an item in the drawer menu]
      */
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
         int id = menuItem.getItemId();
 
-        // TODO - Fill in
-        if (id == R.id.drawer_timeline) {
+        if (id == R.id.drawer_timeline) { // timeline
             getSupportActionBar().setTitle("Timeline");
             setFragment(new TimelineFragment());
-        } else if (id == R.id.drawer_clublist) {
-            getSupportActionBar().setTitle("Clublist");
-            setFragment(new ClublistFragment());
-        } else if (id == R.id.drawer_create_club) {
+        } else if (id == R.id.drawer_favoring_clubs) { // favoring clubs
+            getSupportActionBar().setTitle("Favoring Clubs");
+            setFragment(new FavoringClubsFragment());
+        } else if (id == R.id.drawer_my_following) { // following events
+            getSupportActionBar().setTitle("Following Events");
+            setFragment(new FollowingEventsFragment());
+        } else if (id == R.id.drawer_create_club) { // create a club
+            startActivity(new Intent(getApplicationContext(), ClubCreationActivity.class));
+        } else if (id == R.id.drawer_my_club) { // manage my club
+            Query q = mUserRef.child(getApplicationContext().getString(R.string.firebase_my_club_tag)).limitToFirst(1);
+            q.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    DataSnapshot ds = dataSnapshot.getChildren().iterator().next();
+                    Clubs club = ds.getValue(Clubs.class);
+                    String cn = club.getClub_name();
+                    Intent clubProfilePage = new Intent(getApplicationContext(), ClubProfileActivity.class);
+                    clubProfilePage.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Log.d(TAG, "ManageMyClub Menu Item Intent Extra: " + cn);
+                    clubProfilePage.putExtra(ClubProfileActivity.EXTRA, cn);
+                    startActivity(clubProfilePage);
+                }
 
-        } else if (id == R.id.drawer_logout) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        } else if (id == R.id.drawer_logout) { // log out
             userClickedLogOut();
         }
 
-        CloseDrawerAndSearchBar();
+        CloseDrawer();
         return true;
     }
 
@@ -252,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     private void userClickedLogOut() {
         mAuth.signOut();
-        onStart();
+        recreate();
     }
 
     /**
@@ -282,11 +319,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     /**
      * Hepler method which closes the Drawer when an item is clicked
      */
-    private void CloseDrawerAndSearchBar() {
+    private void CloseDrawer() {
         if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else if (materialSearchView.isSearchOpen()) {
-            materialSearchView.closeSearch();
         }
     }
 
@@ -295,7 +330,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     private void setFragment(Fragment fragment) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.main_container, fragment).addToBackStack(null);
+        fragmentTransaction.replace(R.id.main_container, fragment);
         fragmentTransaction.commit();
+    }
+
+    private void setFragmentWithBackStack(Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction().addToBackStack(null);
+        fragmentTransaction.replace(R.id.main_container, fragment);
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * method checkIfMyClubExist checks if the user has it own club
+     */
+    public boolean checkIfMyClubExist(DataSnapshot dataSnapshot) {
+        Log.d(TAG, "checkIfMyClubExist");
+
+        return dataSnapshot.hasChild(getApplicationContext()
+                .getString(R.string.firebase_my_club_tag));
     }
 }

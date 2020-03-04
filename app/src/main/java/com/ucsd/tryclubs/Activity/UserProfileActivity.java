@@ -1,10 +1,16 @@
 package com.ucsd.tryclubs.Activity;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.button.MaterialButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -26,9 +32,7 @@ import com.ucsd.tryclubs.MainActivity;
 import com.ucsd.tryclubs.R;
 
 /**
- * Class UserProfileActivity sets the content to res/layout/activity_user_profile.xml
- * and this is the Profile Page in the App.
- *
+ * class UserProfileActivity is the "User Profile" page in the App.
  */
 public class UserProfileActivity extends AppCompatActivity {
 
@@ -36,6 +40,7 @@ public class UserProfileActivity extends AppCompatActivity {
     private Button mChangePasswordBtn;
     private Button mDeleteAccountBtn;
     private ImageButton mGoBackBtn;
+    private MaterialButton mLogoutBtn;
     private TextView mWelcomeTextView;
     private FirebaseAuth mAuth;
     private ImageView mGaryFace;
@@ -44,6 +49,8 @@ public class UserProfileActivity extends AppCompatActivity {
 
     // Easter Egg
     private int hitGary = 1;
+
+    private static final String TAG = "UserProfileActivity";
 
     /**
      * OnCreate() method is the first method run automatically when
@@ -73,18 +80,19 @@ public class UserProfileActivity extends AppCompatActivity {
         });
 
         // getting all stuff from view
-        final FirebaseUser user = mAuth.getCurrentUser();
         mChangePasswordBtn = (Button) findViewById(R.id.profilePage_changePassword_button);
         mDeleteAccountBtn = (Button) findViewById(R.id.profilePage_deleteAccount_button);
         mGoBackBtn = (ImageButton) findViewById(R.id.profilePage_cancel_imagebutton);
         mWelcomeTextView = (TextView) findViewById(R.id.profilePage_welcomeWord_textview);
         mGaryFace = (ImageView) findViewById(R.id.profilePage_gary_imageView);
+        mLogoutBtn = (MaterialButton) findViewById(R.id.profilePage_logout_materialbuttton);
 
         // attach username to "HELLO"
         String oldWelcome = mWelcomeTextView.getText().toString();
+        final FirebaseUser user = mAuth.getCurrentUser();
         String username = user.getDisplayName();
         if (!TextUtils.isEmpty(username)) {
-            String newWelcome = oldWelcome + " " + username + "!";
+            String newWelcome = oldWelcome + "\n" + username + "!";
             mWelcomeTextView.setText(newWelcome.toUpperCase());
         }
 
@@ -92,10 +100,21 @@ public class UserProfileActivity extends AppCompatActivity {
         mChangePasswordBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                FirebaseUser user = mAuth.getCurrentUser();
                 mAuth.sendPasswordResetEmail(user.getEmail()).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        Toast.makeText(UserProfileActivity.this, "Reset Password Email Sent", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(UserProfileActivity.this, "Reset Password Email Sent", Toast.LENGTH_LONG).show();
+                        Snackbar sn = Snackbar.make(findViewById(android.R.id.content),  "Reset Password Email Sent", Snackbar.LENGTH_LONG);
+                        View view = sn.getView();
+                        TextView tv = (TextView) view.findViewById(android.support.design.R.id.snackbar_text);
+                        tv.setTextColor(Color.parseColor("#FFD700"));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                            tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        } else {
+                            tv.setGravity(Gravity.CENTER_HORIZONTAL);
+                        }
+                        sn.show();
                     }
                 });
             }
@@ -105,15 +124,25 @@ public class UserProfileActivity extends AppCompatActivity {
         mDeleteAccountBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                user.delete();
 
-                FirebaseDatabase.getInstance().getReference().child(getApplicationContext().getString(R.string.firebase_users_tag))
-                        .child(mAuth.getCurrentUser().getUid()).removeValue();
-
-
-                mAuth.signOut();
-                goToMainActivityHelper();
-                Toast.makeText(UserProfileActivity.this, "Account Deleted!", Toast.LENGTH_LONG).show();
+                if (user != null) {
+                    final String currentUid = mAuth.getCurrentUser().getUid();
+                    user.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                mAuth.signOut();
+                                FirebaseDatabase.getInstance().getReference().child(getApplicationContext().getString(R.string.firebase_users_tag))
+                                        .child(currentUid).removeValue();
+                                Toast.makeText(UserProfileActivity.this, "Account Deleted!", Toast.LENGTH_LONG).show();
+                                goToMainActivityHelper();
+                            } else {
+                                Toast.makeText(UserProfileActivity.this, "Some Errors Just Happened with Firebase.\nTroubleshooting: try logout and log back in to delete", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+                }
+                //Snackbar.make(findViewById(android.R.id.content),  "Account Deleted!", Snackbar.LENGTH_LONG).show();
             }
         });
 
@@ -130,12 +159,24 @@ public class UserProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (hitGary <= 5) {
-                    Toast.makeText(getApplicationContext(), "Gary: Ouch! Stop it! It hurts!", Toast.LENGTH_LONG).show();
+                    Toast toast = Toast.makeText(getApplicationContext(), "Gary: Ouch! Stop it! It hurts!", Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 250);
+                    toast.show();
                     hitGary++;
                 } else {
-                    Toast.makeText(getApplicationContext(), "Professionalism Point Deduction!", Toast.LENGTH_LONG).show();
+                    Toast toast = Toast.makeText(getApplicationContext(), "Professionalism Point Deduction!", Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 250);
+                    toast.show();
                     hitGary = 0;
                 }
+            }
+        });
+
+        mLogoutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAuth.signOut();
+                goToMainActivityHelper();
             }
         });
 
@@ -148,6 +189,7 @@ public class UserProfileActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        Animatoo.animateSlideUp(this); //fire the slide up animation
     }
 
     /**
